@@ -1,0 +1,410 @@
+link diagfram https://dbdiagram.io/d/67dc33f975d75cc844da4fb3
+
+
+// MongoDB Database Schema for Online Medical Appointment Scheduling System
+
+
+
+// Users Collection
+{
+  _id: ObjectId,
+  role: String,                 // "patient", "doctor", "admin", "hospital"
+  email: String,                // Unique, indexed
+  phoneNumber: String,          // Unique, indexed
+  password: String,             // Hashed
+  firstName: String,
+  lastName: String,
+  dateOfBirth: Date,
+  gender: String,
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    country: String,
+    postalCode: String
+  },
+  profilePicture: String,       // URL to profile picture
+  createdAt: Date,
+  updatedAt: Date,
+  lastLogin: Date,
+  status: String,               // "active", "inactive", "blocked"
+  resetPasswordToken: String,
+  resetPasswordExpires: Date,
+  verificationStatus: Boolean,  // For email/phone verification
+  otp: {
+    code: String,
+    expiresAt: Date
+  }
+}
+
+// Patients Collection
+{
+  _id: ObjectId,
+  userId: ObjectId,             // Reference to Users collection
+  medicalHistory: [
+    {
+      condition: String,
+      diagnosedDate: Date,
+      notes: String
+    }
+  ],
+  allergies: [String],
+  medications: [
+    {
+      name: String,
+      dosage: String,
+      frequency: String,
+      startDate: Date,
+      endDate: Date
+    }
+  ],
+  emergencyContact: {
+    name: String,
+    relationship: String,
+    phoneNumber: String
+  },
+  familyMembers: [
+    {
+      _id: ObjectId,
+      relationship: String,     // "spouse", "child", "parent", etc.
+      firstName: String,
+      lastName: String,
+      dateOfBirth: Date,
+      gender: String,
+      phoneNumber: String,
+      medicalHistory: [
+        {
+          condition: String,
+          diagnosedDate: Date,
+          notes: String
+        }
+      ]
+    }
+  ],
+  favoriteDoctor: [ObjectId],   // Array of doctor IDs
+  createdAt: Date,
+  updatedAt: Date
+}
+
+// Doctors Collection
+{
+  _id: ObjectId,
+  userId: ObjectId,             // Reference to Users collection
+  hospitalId: ObjectId,         // Reference to Hospitals collection
+  specialties: [String],        // Array of specialties
+  licenseNumber: String,
+  qualifications: [
+    {
+      degree: String,
+      institution: String,
+      year: Number
+    }
+  ],
+  experience: Number,           // Years of experience
+  biography: String,
+  languages: [String],
+  consultationFee: Number,
+  ratings: {
+    average: Number,
+    count: Number
+  },
+  availability: [
+    {
+      day: String,              // "Monday", "Tuesday", etc.
+      slots: [
+        {
+          startTime: String,    // "09:00"
+          endTime: String,      // "10:00"
+          isBooked: Boolean,
+          type: String          // "in-person", "online"
+        }
+      ]
+    }
+  ],
+  onlineConsultationHours: [
+    {
+      day: String,
+      startTime: String,
+      endTime: String
+    }
+  ],
+  createdAt: Date,
+  updatedAt: Date,
+  status: String,               // "approved", "pending", "rejected"
+  verifiedDocuments: Boolean
+}
+
+// Hospitals Collection
+{
+  _id: ObjectId,
+  userId: ObjectId,             // Reference to Users collection
+  name: String,
+  type: String,                 // "Clinic", "Hospital", "Specialized Center"
+  address: {
+    street: String,
+    city: String,
+    state: String,
+    country: String,
+    postalCode: String,
+    coordinates: {
+      latitude: Number,
+      longitude: Number
+    }
+  },
+  contactInfo: {
+    phoneNumber: String,
+    email: String,
+    website: String
+  },
+  services: [String],
+  specialties: [String],
+  operatingHours: [
+    {
+      day: String,
+      openTime: String,
+      closeTime: String
+    }
+  ],
+  facilities: [String],
+  registrationNumber: String,
+  images: [String],             // URLs to hospital images
+  ratings: {
+    average: Number,
+    count: Number
+  },
+  verified: Boolean,            // Verified by admin
+  createdAt: Date,
+  updatedAt: Date,
+  status: String                // "active", "inactive", "pending"
+}
+
+// Appointments Collection
+{
+  _id: ObjectId,
+  patientId: ObjectId,          // Reference to Patients collection
+  doctorId: ObjectId,           // Reference to Doctors collection
+  hospitalId: ObjectId,         // Reference to Hospitals collection
+  appointmentDate: Date,
+  timeSlot: {
+    startTime: String,
+    endTime: String
+  },
+  type: String,                 // "in-person", "online"
+  status: String,               // "scheduled", "completed", "cancelled", "rescheduled"
+  reasonForVisit: String,
+  symptoms: [String],
+  notes: String,
+  queueNumber: Number,          // For physical appointments
+  previousAppointments: [ObjectId], // If rescheduled
+  createdAt: Date,
+  updatedAt: Date,
+  cancelledBy: String,          // "patient", "doctor", "hospital", "system"
+  cancellationReason: String,
+  reminderSent: Boolean,
+  confirmationSent: Boolean,
+  paymentStatus: String,        // "pending", "completed", "refunded"
+  paymentId: ObjectId           // Reference to Payments collection
+}
+
+// MedicalRecords Collection
+{
+  _id: ObjectId,
+  patientId: ObjectId,          // Reference to Patients collection
+  doctorId: ObjectId,           // Reference to Doctors collection
+  hospitalId: ObjectId,         // Reference to Hospitals collection
+  appointmentId: ObjectId,      // Reference to Appointments collection
+  diagnosis: [String],
+  treatment: String,
+  prescription: [
+    {
+      medicationName: String,
+      dosage: String,
+      frequency: String,
+      duration: String,
+      instructions: String
+    }
+  ],
+  labTests: [
+    {
+      name: String,
+      results: String,
+      date: Date,
+      attachments: [String]     // URLs to test result files
+    }
+  ],
+  notes: String,
+  followUpDate: Date,
+  createdAt: Date,
+  updatedAt: Date,
+  isSharedWithPatient: Boolean
+}
+
+// Reviews Collection
+{
+  _id: ObjectId,
+  patientId: ObjectId,          // Reference to Patients collection
+  appointmentId: ObjectId,      // Reference to Appointments collection
+  targetType: String,           // "doctor", "hospital"
+  targetId: ObjectId,           // Reference to either Doctors or Hospitals collection
+  rating: Number,               // 1-5
+  comment: String,
+  createdAt: Date,
+  updatedAt: Date,
+  isApproved: Boolean,          // Admin approval status
+  response: {
+    text: String,
+    respondedBy: ObjectId,      // Reference to Users collection (doctor or hospital)
+    respondedAt: Date
+  }
+}
+
+// Payments Collection
+{
+  _id: ObjectId,
+  appointmentId: ObjectId,      // Reference to Appointments collection
+  patientId: ObjectId,          // Reference to Patients collection
+  amount: Number,
+  currency: String,             // "VND", "USD", etc.
+  paymentMethod: String,        // "Visa", "Momo", "VNPay", etc.
+  transactionId: String,
+  status: String,               // "pending", "completed", "failed", "refunded"
+  paymentDate: Date,
+  refundAmount: Number,
+  refundDate: Date,
+  refundReason: String,
+  receiptUrl: String,           // URL to payment receipt
+  createdAt: Date,
+  updatedAt: Date
+}
+
+// Notifications Collection
+{
+  _id: ObjectId,
+  recipientId: ObjectId,        // Reference to Users collection
+  recipientRole: String,        // "patient", "doctor", "hospital", "admin"
+  type: String,                 // "appointment_reminder", "appointment_confirmation", etc.
+  title: String,
+  message: String,
+  relatedTo: {
+    type: String,               // "appointment", "message", "review", etc.
+    id: ObjectId
+  },
+  isRead: Boolean,
+  createdAt: Date,
+  expiresAt: Date,
+  deliveryStatus: String        // "sent", "delivered", "failed"
+}
+
+// Messages Collection
+{
+  _id: ObjectId,
+  conversationId: ObjectId,     // Reference to Conversations collection
+  senderId: ObjectId,           // Reference to Users collection
+  senderRole: String,           // "patient", "doctor", "hospital", "admin"
+  content: String,
+  attachments: [
+    {
+      name: String,
+      url: String,
+      type: String              // "image", "document", etc.
+    }
+  ],
+  isRead: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+// Conversations Collection
+{
+  _id: ObjectId,
+  participants: [
+    {
+      userId: ObjectId,         // Reference to Users collection
+      role: String              // "patient", "doctor", "hospital", "admin"
+    }
+  ],
+  lastMessage: {
+    content: String,
+    senderId: ObjectId,
+    createdAt: Date
+  },
+  createdAt: Date,
+  updatedAt: Date,
+  status: String                // "active", "archived"
+}
+
+// Promotions Collection
+{
+  _id: ObjectId,
+  code: String,                 // Promo code
+  description: String,
+  discountType: String,         // "percentage", "fixed"
+  discountValue: Number,
+  minimumPurchase: Number,
+  maximumDiscount: Number,
+  startDate: Date,
+  endDate: Date,
+  usageLimit: Number,           // Maximum number of uses
+  usageCount: Number,           // Current number of uses
+  applicableServices: [String], // Array of service IDs or "all"
+  applicableHospitals: [ObjectId], // Array of hospital IDs or "all"
+  createdBy: ObjectId,          // Reference to Users collection (admin)
+  createdAt: Date,
+  updatedAt: Date,
+  status: String                // "active", "expired", "disabled"
+}
+
+// Specialties Collection
+{
+  _id: ObjectId,
+  name: String,
+  description: String,
+  icon: String,                 // URL to specialty icon
+  createdAt: Date,
+  updatedAt: Date
+}
+
+// Services Collection
+{
+  _id: ObjectId,
+  name: String,
+  description: String,
+  category: String,             // "Consultation", "Test", "Procedure", etc.
+  basePrice: Number,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+// HospitalServices Collection (for hospital-specific services and pricing)
+{
+  _id: ObjectId,
+  hospitalId: ObjectId,         // Reference to Hospitals collection
+  serviceId: ObjectId,          // Reference to Services collection
+  price: Number,
+  description: String,
+  isAvailable: Boolean,
+  createdAt: Date,
+  updatedAt: Date
+}
+
+// ActivityLogs Collection
+{
+  _id: ObjectId,
+  userId: ObjectId,             // Reference to Users collection
+  userRole: String,             // "patient", "doctor", "hospital", "admin"
+  action: String,               // "login", "update_profile", "book_appointment", etc.
+  details: Object,              // Additional details about the action
+  ipAddress: String,
+  userAgent: String,
+  timestamp: Date
+}
+
+// SystemSettings Collection
+{
+  _id: ObjectId,
+  key: String,                  // Setting name
+  value: Mixed,                 // Setting value (can be any type)
+  description: String,
+  updatedBy: ObjectId,          // Reference to Users collection (admin)
+  updatedAt: Date
+}
